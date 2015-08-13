@@ -90,35 +90,23 @@ ui <- navbarPage(
             left=1500,top=720,width =1,
             textOutput(outputId='message_events',container=span,inline=T)
         )
-    ),
-
-    navbarMenu(title = "Data",
-               tabPanel(title = "Provincial Data",
-                        DT::dataTableOutput(outputId = "table_province")
-               ),
-               tabPanel("Municipal Data",
-                        DT::dataTableOutput(outputId = "table_town")
-               ),
-               tabPanel("Ward Data",
-                        DT::dataTableOutput(outputId = "table_ward")
-               )
-    )
+        ),
     
-#     tabPanel(
-#         title="Shape Data",
-#         selectInput(
-#             inputId='select_data_level', 
-#             label=h4(
-#                 strong('Select a level:'),
-#                 br(),
-#                 span('(Ward, Municipal or Provincial)')
-#             ),
-#             choices=c('Ward','Municipal','Provincial'),
-#             selected='Municipality'
-#         ),
-#         DT::dataTableOutput(outputId='table')
-#     )
-)
+    tabPanel(
+        title="Shape Data",
+        selectInput(
+            inputId='select_data_level', 
+            label=h4(
+                strong('Select a level:'),
+                br(),
+                span('(Ward, Municipal or Provincial)')
+            ),
+            choices=c('Ward','Municipal','Provincial'),
+            selected='Municipality'
+        ),
+        DT::dataTableOutput(outputId='table')
+    )
+        )
 
 
 server <- function(session, input, output) {
@@ -149,8 +137,7 @@ server <- function(session, input, output) {
     observe(if (input$select_map_level == 'Province'){
         gis$tj <- province_tj
     })
-    observe(if (input$select_map_level == 'Ward' & 
-                ((!is.null(gis$shp_mouseover_id)) | (!is.null(input$map1_topojson_mouseover)))){
+    observe(if (input$select_map_level == 'Ward'){
         gis$shp <- subset(ward_tj_spd,
                           subset = ward_tj_spd@data$MUNICNAME == gis$slice2)
     })
@@ -307,7 +294,7 @@ server <- function(session, input, output) {
         ) # Boundary Coordinates
     )
     
-    observe({#if (is.null(v$msg3)) {
+    observe(if (is.null(v$msg3)) {
         output$map1 <-renderLeaflet({
             leaflet() %>%
                 setView(zoom=6,lng=26,lat=-29) %>%
@@ -379,7 +366,7 @@ server <- function(session, input, output) {
     
 #    observe(if (input$map1_zoom > 8) {
     observeEvent(input$map1_zoom, label="event20",{
-        if ((v$msg3 > 8) & (!is.null(gis$slice1))) {
+        if (v$msg3 > 8) {#& (!is.null(gis$slice1))) {
             label="event20"
             updateRadioButtons(
                 session, inputId = "select_map_level", 
@@ -499,30 +486,30 @@ server <- function(session, input, output) {
         }
     })
     
-#    observe({
-#        if (input$select_data_level=='Ward') {
-            output$table_ward <- DT::renderDataTable(
+    observe({
+        if (input$select_data_level=='Ward') {
+            output$table=DT::renderDataTable(
                 ward_tj_list$objects$Wards2011$geometries$properties, server=T,
                 options=list(pageLength = 50)
             )
-#        }
-#    })
-#    observe({
-#        if (input$select_data_level=='Municipal') {
-            output$table_town <- DT::renderDataTable(
+        }
+    })
+    observe({
+        if (input$select_data_level=='Municipal') {
+            output$table=DT::renderDataTable(
                 town_tj_list$objects$LocalMunicipalities2011$geometries$properties,
                 server=T,options=list(pageLength=50)
             )
-#        }
-#    })
-#    observe({
-#        if (input$select_data_level=='Provincial') {
-            output$table_province <- DT::renderDataTable(
+        }
+    })
+    observe({
+        if (input$select_data_level=='Provincial') {
+            output$table=DT::renderDataTable(
                 province_tj_list$objects$Province_New_SANeighbours$geometries$properties,
                 server=T
             )
-#        }
-#    })
+        }
+    })
 }
 
 shinyApp(ui,server)
